@@ -35,26 +35,23 @@ class Phone(Field):
 
 
 class Birthday(Field):
-    def __str__(self):
-        if self.value is None:
-            return 'Birthday not specified'
-        else:
-            return f'{self.value:%d.%m.%Y}'
-
+    def __init__(self, value):
+        super().__init__(value)
+        self.__value = None
+        self.value = value
+      
     @property
     def value(self):
         return self.__value
 
     @value.setter
-    def value(self, value: str):
-        if value is None:
-            self.__value = None
-        else:
+    def value(self, value):
+        if value:
             try:
-                self.__value = datetime.strptime(value, '%d.%m.%Y').date()
+                datetime.strptime(value, '%d.%m.%Y')
             except:
-                print('Enter the date of birth in the format dd.mm.yyyy')
-
+                raise ValueError('Enter the date of birth in the format dd.mm.yyyy')
+        self.__value = value
 
 class Record:
     def __init__(self, name: Name, phone: Phone = None, birthday: Birthday = None):
@@ -63,6 +60,10 @@ class Record:
         self.birthday = birthday
         if phone:
             self.phones.append(phone)
+            
+    def __str__(self) -> str:
+        return f'User {self.name} - Phones: {", ".join([phone.value for phone in self.phones])}' \
+               f' - Birthday: {self.birthday} '        
 
     def add_phone(self, phone: Phone):
         if isinstance(phone, Phone):
@@ -76,20 +77,16 @@ class Record:
     def edit_phone(self, old_phone: Phone, new_phone: Phone):
         self.phones[self.phones.index(old_phone)] = new_phone
 
-    def days_to_birthday(self, birthday: Birthday):
-        if birthday.value is None:
-            return None
-        now_day = date.today()
-        b_day = datetime.strptime(str(self.birthday), '%d.%m.%Y')
-        birthday_day = date(year=now_day.year,
-                            month=b_day.month, day=b_day.day)
-        if birthday_day < now_day:
-            birthday_day = date(year=now_day.year + 1,
-                                month=b_day.month, day=b_day.day)
-        return (birthday_day - now_day).days
-
-    def __repr__(self) -> str:
-        return f'{self.name.value}: {self.phones}, {self.birthday}'
+    def days_to_birthday(self):
+        if self.birthday:
+            now_day = date.today()
+            b_day = datetime.strptime(str(self.birthday), '%d.%m.%Y')
+            birthday_day = date(year=now_day.year, month=b_day.month, day=b_day.day)
+            if birthday_day < now_day:
+                birthday_day = date(year=now_day.year + 1, month=b_day.month, day=b_day.day)
+            return (birthday_day - now_day).days
+        else:
+            return 'Unknown birthday'
 
 
 class AddressBook(UserDict):
